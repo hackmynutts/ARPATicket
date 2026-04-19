@@ -1,0 +1,9 @@
+﻿namespace ARPATicket.API.DTO
+{
+    public class UserAddDTO
+    {
+        public string name { get; set; }
+        public string username { get; set; }
+        public string email { get; set; }
+    }
+}

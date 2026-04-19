@@ -1,0 +1,158 @@
+@model ARPATicket.UI.Models.TicketAddDTO
+@using ARPATicket.UI.Models
+
+@{
+    ViewData["Title"] = "Nuevo Ticket";
+    var userDict = ViewBag.Users as Dictionary<int, UserDTO>;
+
+    string PokemonSprite(int avatarId) =>
+        $"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{avatarId}.png";
+}
+
+<style>
+    .form-card {
+        max-width: 520px;
+        margin: 2rem auto;
+        background: #fff;
+        border-radius: 14px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+        padding: 2rem 2.5rem;
+    }
+
+    .form-card h2 {
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        text-align: center;
+        color: #111;
+    }
+
+    .form-label {
+        font-weight: 600;
+        font-size: 0.88rem;
+        color: #444;
+    }
+
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 1px solid #d1d5db;
+        font-size: 0.92rem;
+        padding: 0.5rem 0.75rem;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+    }
+
+    .user-option {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.4rem 0.6rem;
+        cursor: pointer;
+        border-radius: 6px;
+    }
+
+    .user-option:hover { background: #f3f4f6; }
+
+    .user-option img {
+        width: 30px;
+        height: 30px;
+        object-fit: contain;
+        image-rendering: pixelated;
+    }
+
+    .btn-crear {
+        width: 100%;
+        background: #2563eb;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 0.6rem;
+        font-weight: 600;
+        font-size: 0.95rem;
+        margin-top: 0.5rem;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+
+    .btn-crear:hover { background: #1d4ed8; }
+
+    .link-back {
+        display: block;
+        text-align: center;
+        margin-top: 1rem;
+        font-size: 0.85rem;
+        color: #6b7280;
+        text-decoration: none;
+    }
+
+    .link-back:hover { color: #111; }
+
+    /* Preview avatar del usuario seleccionado */
+    #avatar-preview {
+        display: none;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+        font-size: 0.85rem;
+        color: #555;
+    }
+
+    #avatar-preview img {
+        width: 36px;
+        height: 36px;
+        object-fit: contain;
+        image-rendering: pixelated;
+    }
+</style>
+
+<div class="form-card">
+    <h2>+ Nuevo Ticket</h2>
+
+    <form asp-action="Create" method="post">
+        @Html.AntiForgeryToken()
+
+        <div class="mb-3">
+            <label class="form-label">Título</label>
+            <input asp-for="title" class="form-control" placeholder="Ej. Bug en login" />
+            <span asp-validation-for="title" class="text-danger small"></span>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Descripción</label>
+            <textarea asp-for="description" class="form-control" rows="3"
+                      placeholder="Describe el ticket..."></textarea>
+            <span asp-validation-for="description" class="text-danger small"></span>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Asignar usuario</label>
+            <select asp-for="assignedUserID" class="form-select" id="userSelect">
+                <option value="0">-- Sin asignar --</option>  
+                @if (userDict != null)
+                {
+                    @foreach (var kv in userDict)
+                    {
+                        <option value="@kv.Key"
+                                data-avatar="@kv.Value.AvatarID"
+                                data-name="@kv.Value.name">
+                            @kv.Value.name
+                        </option>
+                    }
+                }
+            </select>
+        </div>
+
+        <button type="submit" class="btn-crear">Crear Ticket</button>
+    </form>
+
+    <a asp-action="Index" class="link-back">← Volver al Board</a>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -1,0 +1,6 @@
+@ARPATicket.Priority_HostAddress = http://localhost:5260
+
+GET {{ARPATicket.Priority_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

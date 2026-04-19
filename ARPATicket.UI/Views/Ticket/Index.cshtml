@@ -1,0 +1,261 @@
+@model IEnumerable<ARPATicket.UI.Models.TicketDTO>
+@using ARPATicket.UI.Models
+
+@{
+    ViewData["Title"] = "Board";
+    var userDict = ViewBag.Users as Dictionary<int, UserDTO>;
+
+    var open = Model.Where(t => t.status == "Open").ToList();
+    var inProgress = Model.Where(t => t.status == "InProgress").ToList();
+    var closed = Model.Where(t => t.status == "Closed").ToList();
+
+    string PokemonSprite(int avatarId) =>
+        $"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{avatarId}.png";
+
+    string PriorityClass(string p) => p?.ToLower() switch
+    {
+        "high"   or "alta"  => "badge-priority-high",
+        "medium" or "media" => "badge-priority-medium",
+        "low"    or "baja"  => "badge-priority-low",
+        _ => "badge-priority-low"
+    };
+}
+
+<style>
+    .board-wrapper {
+        display: flex;
+        gap: 1.5rem;
+        padding: 1.5rem;
+        align-items: flex-start;
+    }
+
+    .board-column {
+        flex: 1;
+        min-width: 240px;
+        background: #f4f5f7;
+        border-radius: 12px;
+        padding: 1rem;
+    }
+
+    .board-column-header {
+        font-weight: 700;
+        font-size: 1rem;
+        text-align: center;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #ddd;
+    }
+
+    .col-open       .board-column-header { color: #2563eb; border-color: #2563eb; }
+    .col-inprogress .board-column-header { color: #16a34a; border-color: #16a34a; }
+    .col-closed     .board-column-header { color: #dc2626; border-color: #dc2626; }
+
+    .ticket-card {
+        background: #fff;
+        border-radius: 10px;
+        padding: 0.85rem 1rem;
+        margin-bottom: 0.75rem;
+        border-left: 4px solid #ccc;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        position: relative;
+    }
+
+    .col-open       .ticket-card { border-left-color: #2563eb; }
+    .col-inprogress .ticket-card { border-left-color: #16a34a; }
+    .col-closed     .ticket-card { border-left-color: #dc2626; }
+
+    .ticket-card-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.4rem;
+    }
+
+    .pokemon-avatar {
+        width: 40px;
+        height: 40px;
+        object-fit: contain;
+        image-rendering: pixelated;
+    }
+
+    .ticket-title {
+        font-weight: 700;
+        font-size: 0.95rem;
+        flex: 1;
+    }
+
+    .ticket-description {
+        font-size: 0.82rem;
+        color: #555;
+        margin-bottom: 0.5rem;
+        line-height: 1.3;
+    }
+
+    .ticket-footer {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+    }
+
+    .badge-priority-high   { background: #fee2e2; color: #b91c1c; font-size: 0.75rem; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+    .badge-priority-medium { background: #fef9c3; color: #92400e; font-size: 0.75rem; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+    .badge-priority-low    { background: #dcfce7; color: #166534; font-size: 0.75rem; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+
+    .assigned-name {
+        font-size: 0.78rem;
+        color: #666;
+    }
+
+    .board-header-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.5rem 0;
+    }
+
+    .board-title {
+        font-size: 1.4rem;
+        font-weight: 700;
+    }
+
+    .btn-new-ticket {
+        background: #fff;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 0.4rem 1rem;
+        font-size: 0.9rem;
+        text-decoration: none;
+        color: #333;
+        transition: background 0.15s;
+    }
+
+    .btn-new-ticket:hover {
+        background: #f0f0f0;
+        color: #111;
+    }
+
+    .ticket-actions {
+        font-size: 0.75rem;
+        margin-top: 0.4rem;
+    }
+
+    .ticket-actions a {
+        color: #6b7280;
+        text-decoration: none;
+        margin-right: 6px;
+    }
+
+    .ticket-actions a:hover { color: #111; }
+</style>
+
+<div class="board-header-bar">
+    <span class="board-title">ArpaTicket &mdash; Board</span>
+    <a asp-action="Create" asp-controller="Ticket" class="btn-new-ticket">+ Nuevo ticket ↗</a>
+</div>
+
+<div class="board-wrapper">
+
+    @* ── ABIERTO ── *@
+    <div class="board-column col-open">
+        <div class="board-column-header">Abierto</div>
+
+        @foreach (var ticket in open)
+        {
+            UserDTO? user = null;
+            if (ticket.assignedUserID.HasValue && userDict != null)
+                userDict.TryGetValue(ticket.assignedUserID.Value, out user);
+
+            <div class="ticket-card">
+                <div class="ticket-card-header">
+                    @if (user != null && user.AvatarID > 0)
+                    {
+                        <img class="pokemon-avatar"
+                             src="@PokemonSprite(user.AvatarID)"
+                             alt="avatar" />
+                    }
+                    <span class="ticket-title">@ticket.title</span>
+                </div>
+                <div class="ticket-description">@ticket.description</div>
+                <div class="ticket-footer">
+                    <span class="@PriorityClass(ticket.priority)">@ticket.priority</span>
+                    <span class="assigned-name">@(user?.name ?? "Sin asignar")</span>
+                </div>
+                <div class="ticket-actions">
+                    <a asp-action="Edit"    asp-route-id="@ticket.ticketID">Editar</a>
+                    <a asp-action="Details" asp-route-id="@ticket.ticketID">Ver</a>
+                    <a asp-action="Delete"  asp-route-id="@ticket.ticketID">Eliminar</a>
+                </div>
+            </div>
+        }
+    </div>
+
+    @* ── EN PROCESO ── *@
+    <div class="board-column col-inprogress">
+        <div class="board-column-header">En Proceso</div>
+
+        @foreach (var ticket in inProgress)
+        {
+            UserDTO? user = null;
+            if (ticket.assignedUserID.HasValue && userDict != null)
+                userDict.TryGetValue(ticket.assignedUserID.Value, out user);
+
+            <div class="ticket-card">
+                <div class="ticket-card-header">
+                    @if (user != null && user.AvatarID > 0)
+                    {
+                        <img class="pokemon-avatar"
+                             src="@PokemonSprite(user.AvatarID)"
+                             alt="avatar" />
+                    }
+                    <span class="ticket-title">@ticket.title</span>
+                </div>
+                <div class="ticket-description">@ticket.description</div>
+                <div class="ticket-footer">
+                    <span class="@PriorityClass(ticket.priority)">@ticket.priority</span>
+                    <span class="assigned-name">@(user?.name ?? "Sin asignar")</span>
+                </div>
+                <div class="ticket-actions">
+                    <a asp-action="Edit"    asp-route-id="@ticket.ticketID">Editar</a>
+                    <a asp-action="Details" asp-route-id="@ticket.ticketID">Ver</a>
+                    <a asp-action="Delete"  asp-route-id="@ticket.ticketID">Eliminar</a>
+                </div>
+            </div>
+        }
+    </div>
+
+    @* ── CERRADO ── *@
+    <div class="board-column col-closed">
+        <div class="board-column-header">Cerrado</div>
+
+        @foreach (var ticket in closed)
+        {
+            UserDTO? user = null;
+            if (ticket.assignedUserID.HasValue && userDict != null)
+                userDict.TryGetValue(ticket.assignedUserID.Value, out user);
+
+            <div class="ticket-card">
+                <div class="ticket-card-header">
+                    @if (user != null && user.AvatarID > 0)
+                    {
+                        <img class="pokemon-avatar"
+                             src="@PokemonSprite(user.AvatarID)"
+                             alt="avatar" />
+                    }
+                    <span class="ticket-title">@ticket.title</span>
+                </div>
+                <div class="ticket-description">@ticket.description</div>
+                <div class="ticket-footer">
+                    <span class="@PriorityClass(ticket.priority)">@ticket.priority</span>
+                    <span class="assigned-name">@(user?.name ?? "Sin asignar")</span>
+                </div>
+                <div class="ticket-actions">
+                    <a asp-action="Edit"    asp-route-id="@ticket.ticketID">Editar</a>
+                    <a asp-action="Details" asp-route-id="@ticket.ticketID">Ver</a>
+                    <a asp-action="Delete"  asp-route-id="@ticket.ticketID">Eliminar</a>
+                </div>
+            </div>
+        }
+    </div>
+
+</div>
