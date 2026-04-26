@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using ARPATicket.Priority.Handlers;
 using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -35,26 +36,14 @@ app.MapGet("/api/Avatar", async ([FromServices] IHttpClientFactory httpFactory) 
 // Endpoint de prioridad — recibe descripción y devuelve Alta/Media/Baja
 app.MapPost("/api/Priority", ([FromBody] PriorityRequest request) =>
 {
-    var priority = EvaluatePriority(request.Description);
+    var handler = new PriorityHandlerAlta();
+    handler
+        .SetNext(new PriorityHandlerBaja())
+        .SetNext(new PriorityHandlerDefault());
+
+    var priority = handler.Handle(request.Description) ?? "Media";
     return Results.Ok(new { priority = priority });
 });
-
-// Lógica de negocio
-string EvaluatePriority(string description)
-{
-    var altaKeywords = new[] { "caído", "error", "crítico", "no funciona", "urgente", "bloqueado" };
-    var bajaKeywords = new[] { "consulta", "duda", "sugerencia", "mejora" };
-
-    var desc = description.ToLower();
-
-    if (altaKeywords.Any(k => desc.Contains(k)))
-        return "Alta";
-
-    if (bajaKeywords.Any(k => desc.Contains(k)))
-        return "Baja";
-
-    return "Media"; // default según tu croquis
-}
 
 
 if (app.Environment.IsDevelopment())
