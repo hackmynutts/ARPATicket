@@ -4,7 +4,7 @@ using ARPATicket.API.Repository;
 
 namespace ARPATicket.API.Services
 {
-    public class TicketServices : ITicketServices
+    public class TicketServices : TemplateService<TicketAddDTO, Ticket, TicketDTO>, ITicketServices
     {
         private readonly ITicketRepository _ticketRepository;
         private readonly PriorityService _priorityService;
@@ -51,26 +51,7 @@ namespace ARPATicket.API.Services
         // Agregar un nuevo ticket
         public async Task<TicketDTO> AddTicket(TicketAddDTO newTicket)
         {
-            var priority = await _priorityService.GetPriorityAsync(newTicket.description); // se usa
-            var ticket = new Ticket
-            {
-                title = newTicket.title,
-                description = newTicket.description,
-                status = Estado.Open,
-                priority = priority, // se asigna la prioridad evaluada
-                assignedUserID = newTicket.assignedUserID
-            };
-            var addedTicket = await _ticketRepository.CreateTicketAsync(ticket);
-            return new TicketDTO
-            {
-                ticketID = addedTicket.ticketID,
-                title = addedTicket.title,
-                description = addedTicket.description,
-                status = addedTicket.status,
-                priority = addedTicket.priority,
-                assignedUserID = addedTicket.assignedUserID,
-                assignedUser = addedTicket.assignedUser
-            };
+            return await AddAsync(newTicket);
         }
 
         // Actualizar un ticket existente
@@ -103,6 +84,43 @@ namespace ARPATicket.API.Services
         public async Task<bool> DeleteTicket(int id)
         {
             return await _ticketRepository.DeleteTicketAsync(id);
+        }
+
+        // Implementación de métodos abstractos de TemplateService
+        protected override async Task<string> GetExternalDataAsync(TicketAddDTO dto)
+        {
+            return await _priorityService.GetPriorityAsync(dto.description);
+        }
+
+        protected override Ticket MapToModel(TicketAddDTO dto, string externalData)
+        {
+            return new Ticket
+            {
+                title = dto.title,
+                description = dto.description,
+                status = Estado.Open,
+                priority = externalData,
+                assignedUserID = dto.assignedUserID
+            };
+        }
+
+        protected override async Task<Ticket> SaveAsync(Ticket model)
+        {
+            return await _ticketRepository.CreateTicketAsync(model);
+        }
+
+        protected override TicketDTO MapToResultDTO(Ticket model)
+        {
+            return new TicketDTO
+            {
+                ticketID = model.ticketID,
+                title = model.title,
+                description = model.description,
+                status = model.status,
+                priority = model.priority,
+                assignedUserID = model.assignedUserID,
+                assignedUser = model.assignedUser
+            };
         }
     }
 }

@@ -7,13 +7,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddHttpClient(); // ← AGREGAR ESTO
+builder.Services.AddHttpClient(); 
 
 var app = builder.Build();
 
 app.MapGet("/api/Avatar", async ([FromServices] IHttpClientFactory httpFactory) =>
 {
-    var http = httpFactory.CreateClient(); // ← CAMBIAR ESTO
+    var http = httpFactory.CreateClient(); 
 
     int avatarID = Random.Shared.Next(1, 151);
 

@@ -5,7 +5,7 @@ using System.Net.Http;
 
 namespace ARPATicket.API.Services
 {
-    public class UserServices : IUserServices
+    public class UserServices : TemplateService<UserAddDTO, User, UserDTO>,IUserServices
     {
         private readonly IUserRepository _userRepository;
         private readonly PriorityService _priorityService;
@@ -47,25 +47,7 @@ namespace ARPATicket.API.Services
         // Agregar un nuevo usuario
         public async Task<UserDTO> AddUser(UserAddDTO newUser)
         {
-
-            var avatarID = await _priorityService.GetAvatarIdAsync(); // se usa
-
-            var user = new User
-            {
-                name = newUser.name,
-                username = newUser.username,
-                email = newUser.email,
-                AvatarID = avatarID
-            };
-            var addedUser = await _userRepository.CreateUserAsync(user);
-            return new UserDTO
-            {
-                userID = addedUser.userID,
-                name = addedUser.name,
-                username = addedUser.username,
-                email = addedUser.email,
-                AvatarID = addedUser.AvatarID
-            };
+            return await AddAsync(newUser);
         }
 
         // Actualizar un usuario existente
@@ -97,6 +79,41 @@ namespace ARPATicket.API.Services
         public async Task<bool> DeleteUser(int id)
         {
             return await _userRepository.DeleteUserAsync(id);
+        }
+
+        //IMPLEMENTACION DE CLASES ABSTRACTAS DEL TEMPLATE METHOD
+        protected override async Task<string> GetExternalDataAsync(UserAddDTO dto)
+        {
+            var avatarID = await _priorityService.GetAvatarIdAsync();
+            return avatarID.ToString();
+        }
+
+        protected override User MapToModel(UserAddDTO dto, string externalData)
+        {
+            return new User
+            {
+                name = dto.name,
+                username = dto.username,
+                email = dto.email,
+                AvatarID = int.Parse(externalData)
+            };
+        }
+
+        protected override async Task<User> SaveAsync(User model)
+        {
+            return await _userRepository.CreateUserAsync(model);
+        }
+
+        protected override UserDTO MapToResultDTO(User model)
+        {
+            return new UserDTO
+            {
+                userID = model.userID,
+                name = model.name,
+                username = model.username,
+                email = model.email,
+                AvatarID = model.AvatarID
+            };
         }
     }
 }
