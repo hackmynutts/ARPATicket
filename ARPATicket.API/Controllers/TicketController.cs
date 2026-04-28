@@ -1,5 +1,6 @@
 ﻿using ARPATicket.API.DTO;
 using ARPATicket.API.Services;
+using ARPATicket.API.Commands;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ARPATicket.API.Controllers
@@ -37,8 +38,8 @@ namespace ARPATicket.API.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-
-            var createdTicket = await _ticketServices.AddTicket(newTicket);
+            ICommand<TicketDTO> command = new CommandAddTicket(_ticketServices, newTicket);
+            var createdTicket = await command.Execute();
             return CreatedAtAction(nameof(GetById),
                 new { id = createdTicket.ticketID }, createdTicket);
         }
@@ -49,8 +50,8 @@ namespace ARPATicket.API.Controllers
         {
             if (id != updatedTicket.ticketID)
                 return BadRequest("ID no coincide");
-
-            var result = await _ticketServices.UpdateTicket(updatedTicket);
+            ICommand<TicketDTO?> command = new CommandEditTicket(_ticketServices, updatedTicket);
+            var result = await command.Execute();
             return result is not null ? Ok(result) : NotFound();
         }
 
@@ -58,7 +59,8 @@ namespace ARPATicket.API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var deleted = await _ticketServices.DeleteTicket(id);
+            ICommand<bool> command = new CommandDeleteTicket(_ticketServices, id);
+            var deleted = await command.Execute();
             return deleted ? NoContent() : NotFound();
         }
     }
