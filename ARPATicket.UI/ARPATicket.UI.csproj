@@ -11,10 +11,10 @@
   </ItemGroup>
 
   <ItemGroup>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="CSS\" />
+    <Compile Remove="CSS\**" />
+    <Content Remove="CSS\**" />
+    <EmbeddedResource Remove="CSS\**" />
+    <None Remove="CSS\**" />
   </ItemGroup>
 
 </Project>
